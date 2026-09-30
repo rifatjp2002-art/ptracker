@@ -1,5 +1,5 @@
 import { CycleRecord, PredictionResult, Language } from '../types';
-import { formatDisplayDate } from './cycleCalculator';
+import { formatDisplayDate, toBengaliDigits } from './cycleCalculator';
 
 export function exportToCSV(records: CycleRecord[], language: Language) {
   const isBn = language === 'bn';
@@ -37,11 +37,11 @@ export function printDoctorReport(
 
   const regularityLabel =
     prediction.cycleRegularity === 'regular'
-      ? (isBn ? `নিয়মিত (Regular - ±${prediction.standardDeviation} দিন)` : `Regular (±${prediction.standardDeviation}d)`)
+      ? (isBn ? `নিয়মিত (Regular - ±${toBengaliDigits(prediction.standardDeviation)} দিন)` : `Regular (±${prediction.standardDeviation}d)`)
       : prediction.cycleRegularity === 'irregular'
       ? (isBn ? 'অনিয়মিত (Irregular)' : 'Irregular')
       : (isBn
-          ? `পর্যাপ্ত ডাটা নেই (${records.length}/৪টি এন্ট্রি, আরও ${Math.max(1, 4 - records.length)}টি প্রয়োজন)`
+          ? `পর্যাপ্ত ডাটা নেই (${toBengaliDigits(records.length)}/৪টি এন্ট্রি, আরও ${toBengaliDigits(Math.max(1, 4 - records.length))}টি প্রয়োজন)`
           : `Insufficient Data (${records.length}/4 logged, need ${Math.max(1, 4 - records.length)} more)`);
 
   const reportTitle = isBn
@@ -62,7 +62,7 @@ export function printDoctorReport(
           ${formatDisplayDate(r.startDate, language)}
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-          ${r.durationDays} ${isBn ? 'দিন' : 'Days'}
+          ${isBn ? toBengaliDigits(r.durationDays) : r.durationDays} ${isBn ? 'দিন' : 'Days'}
         </td>
         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center; text-transform: capitalize;">
           ${r.flow || 'medium'}
@@ -83,14 +83,18 @@ export function printDoctorReport(
       <head>
         <meta charset="utf-8">
         <title>${reportTitle}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             color: #2d3748;
             padding: 36px;
             max-width: 800px;
             margin: 0 auto;
             background: #fff;
+            line-height: 1.6;
           }
           .header {
             border-bottom: 3px solid #e91e63;
@@ -153,7 +157,7 @@ export function printDoctorReport(
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-title">${avgCycleLabel}</div>
-            <div class="stat-value">${prediction.averageCycleLength} ${isBn ? 'দিন' : 'Days'}</div>
+            <div class="stat-value">${isBn ? toBengaliDigits(prediction.averageCycleLength) : prediction.averageCycleLength} ${isBn ? 'দিন' : 'Days'}</div>
           </div>
           <div class="stat-card">
             <div class="stat-title">${regularityHeader}</div>
@@ -161,7 +165,7 @@ export function printDoctorReport(
           </div>
           <div class="stat-card">
             <div class="stat-title">${totalLogsLabel}</div>
-            <div class="stat-value">${sorted.length}</div>
+            <div class="stat-value">${isBn ? toBengaliDigits(sorted.length) : sorted.length}</div>
           </div>
         </div>
 

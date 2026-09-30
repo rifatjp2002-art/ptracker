@@ -34,7 +34,8 @@ const firebaseConfig = {
   projectId: firebaseConfigJson.projectId || "YOUR_PROJECT_ID",
   storageBucket: firebaseConfigJson.storageBucket || "YOUR_STORAGE_BUCKET",
   messagingSenderId: firebaseConfigJson.messagingSenderId || "YOUR_SENDER_ID",
-  appId: firebaseConfigJson.appId || "YOUR_APP_ID"
+  appId: firebaseConfigJson.appId || "YOUR_APP_ID",
+  measurementId: firebaseConfigJson.measurementId || undefined
 };
 
 // Initialize Firebase App

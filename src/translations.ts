@@ -1,5 +1,10 @@
 import { Language } from './types';
 
+const toBn = (val: number | string) => {
+  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(val).replace(/[0-9]/g, (d) => bnDigits[Number(d)]);
+};
+
 export const translations = {
   en: {
     appTitle: 'Period Tracker',
@@ -182,10 +187,10 @@ export const translations = {
 
     // Dashboard & Predictions
     nextExpectedDate: 'পরবর্তী সম্ভাব্য পিরিয়ডের তারিখ',
-    inDays: (days: number) => days === 0 ? 'আজকে সম্ভাব্য' : days < 0 ? `${Math.abs(days)} দিন বিলম্বিত` : `${days} দিন পর`,
-    cycleDay: (day: number, total: number) => `${total} দিনের সাইকেলের ${day}তম দিন`,
+    inDays: (days: number) => days === 0 ? 'আজকে সম্ভাব্য' : days < 0 ? `${toBn(Math.abs(days))} দিন বিলম্বিত` : `${toBn(days)} দিন পর`,
+    cycleDay: (day: number, total: number) => `${toBn(total)} দিনের সাইকেলের ${toBn(day)}তম দিন`,
     avgCycleLength: 'গড় সাইকেল দৈর্ঘ্য',
-    daysCount: (days: number) => `${days} দিন`,
+    daysCount: (days: number) => `${toBn(days)} দিন`,
     lastPeriodStart: 'সর্বশেষ পিরিয়ড শুরু',
     fertileWindow: 'সম্ভাব্য ফার্টাইল (গর্ভধারণ) সময়',
     ovulationDay: 'সম্ভাব্য ডিম্বস্ফোটন (ওভিউলেশন) দিন',
@@ -206,7 +211,7 @@ export const translations = {
         ? 'এখনো কোনো ডাটা সেভ করা হয়নি। নিচের "পিরিয়ড এন্ট্রি যুক্ত করুন" এ ট্যাপ করে আপনার তারিখ দিন।'
         : count === 1 
         ? 'ডিফল্ট ২৮ দিনের অনুমান ব্যবহার করা হয়েছে (১টি রেকর্ড)। নির্ভুল এআই পূর্বাভাস পেতে আরও তারিখ যোগ করুন।'
-        : `আপনার অতীতের ${count}টি সাইকেলের গড় সময় থেকে এআই দ্বারা হিসাবকৃত।`,
+        : `আপনার অতীতের ${toBn(count)}টি সাইকেলের গড় সময় থেকে এআই দ্বারা হিসাবকৃত।`,
     noRecordsTitle: 'কোনো পিরিয়ড এন্ট্রি যোগ করা হয়নি',
     noRecordsSubtitle: 'সঠিক গণনা ও পূর্বাভাস পেতে আপনার শেষ পিরিয়ডের শুরুর তারিখ যোগ করুন।',
 
@@ -219,7 +224,7 @@ export const translations = {
     // Form & Modal
     logPeriodTitle: 'পিরিয়ড এন্ট্রি যুক্ত করুন',
     editPeriodTitle: 'পিরিয়ড এন্ট্রি এডিট করুন',
-    formInstructionTip: '📌 টিপস: শুধুমাত্র পিরিয়ড শুরুর ১ম দিন নির্বাচন করুন এবং এটি কতদিন স্থায়ী (যেমন ৪ দিন) তা নির্ধারণ করুন। প্রতিদিন আলাদা এন্ট্রি দেওয়ার প্রয়োজন নেই!',
+    formInstructionTip: '📌 টিপস: শুধুমাত্র পিরিয়ড শুরুর ১ম দিন নির্বাচন করুন এবং এটি কতদিন স্থায়ী (যেমন ৩ দিন) তা নির্ধারণ করুন। প্রতিদিন আলাদা এন্ট্রি দেওয়ার প্রয়োজন নেই!',
     startDateLabel: 'শুরুর তারিখ',
     durationLabel: 'স্থায়িত্ব (দিন)',
     flowLabel: 'প্রবাহের মাত্রা (Flow)',
@@ -256,7 +261,7 @@ export const translations = {
     historyTitle: 'পূর্ববর্তী পিরিয়ড রেকর্ডসমূহ',
     noHistory: 'এখনো কোনো রেকর্ড যুক্ত করা হয়নি।',
     addFirstLog: '"পিরিয়ড যুক্ত করুন" বাটনে ট্যাপ করে শুরুর তারিখ যোগ করুন!',
-    durationDaysText: (days: number) => `${days} দিন স্থায়ী`,
+    durationDaysText: (days: number) => `${toBn(days)} দিন স্থায়ী`,
 
     // Notifications & Toasts
     savedSuccess: 'পিরিয়ড রেকর্ড সফলভাবে সংরক্ষিত হয়েছে!',
@@ -280,7 +285,7 @@ export const translations = {
     guestDataMigrated: 'আপনার লোকাল রেকর্ডগুলো সফলভাবে গুগল ক্লাউডে সিঙ্ক করা হয়েছে!',
 
     // Active Period In Progress
-    periodActiveTitle: (day: number) => `আজ পিরিয়ডের ${day}ম দিন চলছে`,
+    periodActiveTitle: (day: number) => `আজ পিরিয়ডের ${toBn(day)}ম দিন চলছে`,
     periodActiveSubtitle: 'পিরিয়ড ব্লিডিং ফেজ চলমান। কুসুম গরম পানি পান করুন ও পর্যাপ্ত বিশ্রাম নিন।',
 
     // Cycle Regularity
@@ -303,7 +308,7 @@ export const translations = {
 
     // Daily Wellness
     dailyWellnessTitle: 'আজকের সুস্থতা ও যত্ন',
-    waterGlasses: (count: number) => `৮ গ্লাসের মধ্যে ${count} গ্লাস পানি`,
+    waterGlasses: (count: number) => `৮ গ্লাসের মধ্যে ${toBn(count)} গ্লাস পানি`,
     pillLabel: 'দৈনিক ওষুধ / আয়রন / ভিটামিন',
     pillTaken: 'আজ খাওয়া হয়েছে',
     pillNotTaken: 'খাওয়া হলে টিক দিন',

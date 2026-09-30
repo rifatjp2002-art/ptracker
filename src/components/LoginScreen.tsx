@@ -25,64 +25,64 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-pink-100/60 border border-pink-100/80 text-center space-y-6"
+        className="w-full max-w-md bg-white dark:bg-[#1a1924] rounded-3xl p-6 sm:p-8 shadow-xl shadow-pink-100/60 dark:shadow-none border border-pink-100/80 dark:border-pink-950/40 text-center space-y-6"
       >
         {/* Top Decorative Icon */}
         <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 via-rose-500 to-pink-400 p-1 shadow-lg shadow-pink-300/50 flex items-center justify-center">
-          <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-            <Heart className="w-10 h-10 text-pink-600 fill-pink-50 animate-pulse" />
+          <div className="w-full h-full bg-white dark:bg-[#1a1924] rounded-full flex items-center justify-center">
+            <Heart className="w-10 h-10 text-pink-600 dark:text-pink-400 fill-pink-50 dark:fill-pink-950/40 animate-pulse" />
           </div>
         </div>
 
         {/* Title & Subtitle */}
         <div className="space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
             {t.welcomeTitle}
           </h2>
-          <p className="text-sm text-gray-600 font-normal leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
             {t.welcomeSubtitle}
           </p>
         </div>
 
         {/* Feature Pills */}
         <div className="grid grid-cols-1 gap-2.5 text-left pt-2">
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-pink-50/70 border border-pink-100">
-            <div className="p-2 rounded-xl bg-pink-100 text-pink-600">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-pink-50/70 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/30">
+            <div className="p-2 rounded-xl bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-900">
+              <p className="text-xs font-bold text-gray-900 dark:text-gray-100">
                 {language === 'bn' ? 'স্মার্ট এআই পূর্বাভাস' : 'Smart AI Predictions'}
               </p>
-              <p className="text-[11px] text-gray-600">
+              <p className="text-[11px] text-gray-600 dark:text-gray-400">
                 {language === 'bn' ? 'আপনার আগের রেটিং দিয়ে গাণিতিক নিখুঁত দিন হিসাব' : 'Automatic average cycle calculation'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-rose-50/70 border border-rose-100">
-            <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30">
+            <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400">
               <WifiOff className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-900">
+              <p className="text-xs font-bold text-gray-900 dark:text-gray-100">
                 {language === 'bn' ? 'সম্পূর্ণ অফলাইন সুবিধা' : '100% Offline Capability'}
               </p>
-              <p className="text-[11px] text-gray-600">
+              <p className="text-[11px] text-gray-600 dark:text-gray-400">
                 {language === 'bn' ? 'ইন্টারনেট ছাড়াই সেভ করুন, অনলাইনে স্বয়ংক্রিয় সিঙ্ক' : 'Save offline, auto-sync when online'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-2xl bg-purple-50/70 border border-purple-100">
-            <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30">
+            <div className="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-900">
+              <p className="text-xs font-bold text-gray-900 dark:text-gray-100">
                 {language === 'bn' ? 'নিরাপদ গুগল ক্লাউড' : 'Secure Firebase Cloud'}
               </p>
-              <p className="text-[11px] text-gray-600">
+              <p className="text-[11px] text-gray-600 dark:text-gray-400">
                 {language === 'bn' ? 'আপনার ডাটা শুধু আপনার একাউন্টেই সংরক্ষিত' : 'Private to your individual account'}
               </p>
             </div>
@@ -127,14 +127,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <button
             onClick={onGuestLogin}
             type="button"
-            className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold text-xs border border-gray-200 transition-colors cursor-pointer active:scale-98"
+            className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl bg-gray-50 dark:bg-gray-800/80 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-semibold text-xs border border-gray-200 dark:border-gray-700 transition-colors cursor-pointer active:scale-98"
           >
             👤 {t.continueAsGuest}
           </button>
         </div>
 
         {/* Offline Note */}
-        <p className="text-xs text-gray-500 font-medium leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed bg-gray-50 dark:bg-[#201e2b] p-3 rounded-xl border border-gray-100 dark:border-gray-800">
           💡 {t.loginOfflineNote}
         </p>
       </motion.div>

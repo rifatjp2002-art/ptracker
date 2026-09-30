@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CycleRecord, PredictionResult, Language } from '../types';
 import { getTranslation } from '../translations';
-import { formatDisplayDate } from '../utils/cycleCalculator';
+import { formatDisplayDate, toBengaliDigits } from '../utils/cycleCalculator';
 import { printDoctorReport, exportToCSV } from '../utils/reportGenerator';
 import { 
   Calendar, 
@@ -58,13 +58,13 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
   if (sortedRecords.length === 0) {
     return (
-      <div className="bg-white rounded-3xl p-8 text-center border border-pink-100 shadow-md shadow-pink-100/50 space-y-4">
-        <div className="w-16 h-16 rounded-full bg-pink-100 mx-auto flex items-center justify-center text-pink-600">
-          <Heart className="w-8 h-8 fill-pink-200" />
+      <div className="bg-white dark:bg-[#1a1924] rounded-3xl p-8 text-center border border-pink-100 dark:border-pink-950/40 shadow-md shadow-pink-100/50 dark:shadow-none space-y-4">
+        <div className="w-16 h-16 rounded-full bg-pink-100 dark:bg-pink-950/60 mx-auto flex items-center justify-center text-pink-600 dark:text-pink-400">
+          <Heart className="w-8 h-8 fill-pink-200 dark:fill-pink-900/60" />
         </div>
         <div className="space-y-1">
-          <h3 className="font-extrabold text-gray-900 text-lg">{t.historyTitle}</h3>
-          <p className="text-sm text-gray-500 max-w-sm mx-auto">{t.noHistory}</p>
+          <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg">{t.historyTitle}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">{t.noHistory}</p>
         </div>
         <button
           onClick={onOpenLogModal}
@@ -78,8 +78,8 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   }
 
   const flowBadgeStyles = {
-    light: 'bg-rose-50 text-rose-700 border-rose-200',
-    medium: 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
+    light: 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/60',
+    medium: 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200 border-rose-300 dark:border-rose-800 font-bold',
     heavy: 'bg-rose-600 text-white border-rose-600 font-bold',
   };
 
@@ -88,12 +88,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({
       {/* Top Header & Export Doctor Report Button */}
       <div className="flex items-center justify-between px-1 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="font-extrabold text-gray-900 text-lg flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-pink-600" />
+          <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-pink-600 dark:text-pink-400" />
             <span>{t.historyTitle}</span>
           </h3>
-          <span className="text-xs font-semibold text-pink-600 bg-pink-50 px-2.5 py-1 rounded-full border border-pink-200">
-            {records.length} {language === 'bn' ? 'টি এন্ট্রি' : 'Entries'}
+          <span className="text-xs font-semibold text-pink-600 dark:text-pink-300 bg-pink-50 dark:bg-pink-950/50 px-2.5 py-1 rounded-full border border-pink-200 dark:border-pink-900/50">
+            {language === 'bn' ? `${toBengaliDigits(records.length)}টি এন্ট্রি` : `${records.length} Entries`}
           </span>
         </div>
 
@@ -101,27 +101,27 @@ export const HistoryList: React.FC<HistoryListProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="px-3.5 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 text-xs font-bold border border-pink-200 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/50 dark:hover:bg-pink-900/50 text-pink-700 dark:text-pink-300 text-xs font-bold border border-pink-200 dark:border-pink-800 flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
-            <FileDown className="w-4 h-4 text-pink-600" />
+            <FileDown className="w-4 h-4 text-pink-600 dark:text-pink-400" />
             <span>{t.exportDoctorReport}</span>
             <ChevronDown className="w-3.5 h-3.5 opacity-60" />
           </button>
 
           {showExportMenu && (
-            <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-2xl shadow-xl border border-pink-100 py-1.5 z-30 animate-fade-in text-xs font-medium">
+            <div className="absolute right-0 mt-1.5 w-52 bg-white dark:bg-[#1e1c28] rounded-2xl shadow-xl border border-pink-100 dark:border-pink-900/40 py-1.5 z-30 animate-fade-in text-xs font-medium">
               <button
                 onClick={handlePrintPDF}
-                className="w-full px-3.5 py-2 text-left hover:bg-pink-50 text-gray-800 flex items-center gap-2 transition-colors cursor-pointer"
+                className="w-full px-3.5 py-2 text-left hover:bg-pink-50 dark:hover:bg-pink-950/40 text-gray-800 dark:text-gray-200 flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <Printer className="w-4 h-4 text-pink-600" />
+                <Printer className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                 <span>{t.printPdfReport}</span>
               </button>
               <button
                 onClick={handleExportCSV}
-                className="w-full px-3.5 py-2 text-left hover:bg-pink-50 text-gray-800 flex items-center gap-2 transition-colors cursor-pointer border-t border-gray-50"
+                className="w-full px-3.5 py-2 text-left hover:bg-pink-50 dark:hover:bg-pink-950/40 text-gray-800 dark:text-gray-200 flex items-center gap-2 transition-colors cursor-pointer border-t border-gray-50 dark:border-gray-800"
               >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>{t.downloadCsv}</span>
               </button>
             </div>
@@ -136,22 +136,22 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: index * 0.05 }}
-            className="bg-white rounded-2xl p-4 sm:p-5 border border-pink-100/90 shadow-sm hover:shadow-md transition-shadow space-y-3"
+            className="bg-white dark:bg-[#1a1924] rounded-2xl p-4 sm:p-5 border border-pink-100/90 dark:border-pink-950/40 shadow-sm hover:shadow-md transition-shadow space-y-3"
           >
             {/* Entry Header */}
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
-                <p className="text-base font-extrabold text-gray-900">
+                <p className="text-base font-extrabold text-gray-900 dark:text-gray-100">
                   {formatDisplayDate(record.startDate, language)}
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-pink-600 bg-pink-50 px-2.5 py-0.5 rounded-full border border-pink-200">
+                  <span className="text-xs font-bold text-pink-600 dark:text-pink-300 bg-pink-50 dark:bg-pink-950/50 px-2.5 py-0.5 rounded-full border border-pink-200 dark:border-pink-900/50">
                     {t.durationDaysText(record.durationDays)}
                   </span>
                   {record.flow && (
                     <span
                       className={`text-xs px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${
-                        flowBadgeStyles[record.flow] || 'bg-gray-100 text-gray-700'
+                        flowBadgeStyles[record.flow] || 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                       }`}
                     >
                       <Droplet className="w-3 h-3" />
@@ -165,7 +165,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onEditRecord(record)}
-                  className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-gray-500 hover:text-pink-600 hover:bg-pink-50 transition-colors cursor-pointer flex items-center justify-center"
+                  className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-gray-500 hover:text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/40 transition-colors cursor-pointer flex items-center justify-center"
                   title={t.editPeriodTitle}
                   aria-label="Edit"
                 >
@@ -174,7 +174,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                 {record.id && (
                   <button
                     onClick={() => onDeleteRecord(record.id!)}
-                    className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer flex items-center justify-center"
+                    className="min-h-[44px] min-w-[44px] p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer flex items-center justify-center"
                     title={t.deleteBtn}
                     aria-label="Delete"
                   >
@@ -186,14 +186,14 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
             {/* Symptoms Chips */}
             {record.symptoms && record.symptoms.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50">
+              <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-50 dark:border-gray-800">
                 <Smile className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 {record.symptoms.map(symId => {
                   const symLabel = t.symptomsList[symId as keyof typeof t.symptomsList] || symId;
                   return (
                     <span
                       key={symId}
-                      className="text-[11px] font-medium bg-gray-50 text-gray-700 px-2 py-0.5 rounded-md border border-gray-100"
+                      className="text-[11px] font-medium bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-md border border-gray-100 dark:border-gray-700"
                     >
                       {symLabel}
                     </span>
@@ -204,7 +204,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
             {/* Notes */}
             {record.notes && (
-              <div className="flex items-start gap-1.5 text-xs text-gray-600 bg-pink-50/30 p-2 rounded-xl border border-pink-100/50 italic">
+              <div className="flex items-start gap-1.5 text-xs text-gray-600 dark:text-gray-300 bg-pink-50/30 dark:bg-pink-950/30 p-2 rounded-xl border border-pink-100/50 dark:border-pink-900/40 italic">
                 <FileText className="w-3.5 h-3.5 text-pink-400 shrink-0 mt-0.5" />
                 <p>{record.notes}</p>
               </div>

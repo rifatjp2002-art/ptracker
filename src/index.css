@@ -1,1 +1,238 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Hind Siliguri', 'Plus Jakarta Sans', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-bengali: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+  --font-english: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Global typography & smooth rendering for Bengali & English */
+html {
+  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
+/* Ensure inputs, buttons, and form controls inherit the beautiful font stack */
+button, input, optgroup, select, textarea {
+  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', 'Noto Sans Bengali', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Enhancing Bengali matras and conjuncts readability */
+.font-bengali {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+}
+
+.font-english {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Hide scrollbars completely on mobile and web to prevent right-side vertical color bars */
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
+
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-x: hidden;
+  max-width: 100vw;
+  min-height: 100%;
+}
+
+/* Safe area inset helpers */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Automatic dark theme styling matching device settings and html.dark */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+
+  html:not(.light) {
+    color-scheme: dark;
+    background-color: #121118;
+    color: #f3f4f6;
+  }
+
+  html:not(.light) body {
+    background-color: #121118 !important;
+    color: #f3f4f6 !important;
+  }
+
+  html:not(.light) .bg-white {
+    background-color: #1a1924 !important;
+    color: #f3f4f6;
+  }
+
+  html:not(.light) .bg-white\/90,
+  html:not(.light) .bg-white\/95,
+  html:not(.light) .bg-white\/80 {
+    background-color: rgba(26, 25, 36, 0.95) !important;
+    color: #f3f4f6;
+  }
+
+  html:not(.light) .border-pink-100,
+  html:not(.light) .border-pink-100\/80,
+  html:not(.light) .border-pink-100\/70,
+  html:not(.light) .border-pink-100\/60 {
+    border-color: rgba(244, 114, 182, 0.18) !important;
+  }
+
+  html:not(.light) .border-gray-100,
+  html:not(.light) .border-gray-200,
+  html:not(.light) .border-gray-200\/80,
+  html:not(.light) .border-gray-200\/70 {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  html:not(.light) .bg-pink-50,
+  html:not(.light) .bg-pink-50\/80,
+  html:not(.light) .bg-pink-50\/70,
+  html:not(.light) .bg-pink-50\/60,
+  html:not(.light) .bg-pink-50\/30 {
+    background-color: rgba(244, 63, 94, 0.14) !important;
+  }
+
+  html:not(.light) .bg-gray-50 {
+    background-color: #22202e !important;
+  }
+
+  html:not(.light) .bg-gray-100 {
+    background-color: #2b283a !important;
+  }
+
+  html:not(.light) .text-gray-900,
+  html:not(.light) .text-gray-800 {
+    color: #f9fafb !important;
+  }
+
+  html:not(.light) .text-gray-700 {
+    color: #e5e7eb !important;
+  }
+
+  html:not(.light) .text-gray-600 {
+    color: #d1d5db !important;
+  }
+
+  html:not(.light) .text-gray-500,
+  html:not(.light) .text-gray-400 {
+    color: #9ca3af !important;
+  }
+
+  html:not(.light) input,
+  html:not(.light) textarea,
+  html:not(.light) select {
+    background-color: #22202e !important;
+    color: #f9fafb !important;
+    border-color: rgba(244, 114, 182, 0.22) !important;
+  }
+
+  html:not(.light) input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+html.dark {
+  color-scheme: dark;
+  background-color: #121118;
+  color: #f3f4f6;
+}
+
+html.dark body {
+  background-color: #121118 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white {
+  background-color: #1a1924 !important;
+  color: #f3f4f6;
+}
+
+html.dark .bg-white\/90,
+html.dark .bg-white\/95,
+html.dark .bg-white\/80 {
+  background-color: rgba(26, 25, 36, 0.95) !important;
+  color: #f3f4f6;
+}
+
+html.dark .border-pink-100,
+html.dark .border-pink-100\/80,
+html.dark .border-pink-100\/70,
+html.dark .border-pink-100\/60 {
+  border-color: rgba(244, 114, 182, 0.18) !important;
+}
+
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-200\/80,
+html.dark .border-gray-200\/70 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+html.dark .bg-pink-50,
+html.dark .bg-pink-50\/80,
+html.dark .bg-pink-50\/70,
+html.dark .bg-pink-50\/60,
+html.dark .bg-pink-50\/30 {
+  background-color: rgba(244, 63, 94, 0.14) !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #22202e !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #2b283a !important;
+}
+
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f9fafb !important;
+}
+
+html.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #22202e !important;
+  color: #f9fafb !important;
+  border-color: rgba(244, 114, 182, 0.22) !important;
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

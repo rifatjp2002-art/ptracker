@@ -116,47 +116,47 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
 
         {showIOSModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
-            <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-pink-100 text-gray-800">
-              <div className="flex items-center justify-between pb-3 border-b border-pink-100">
+            <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-[#1a1924] p-6 shadow-2xl border border-pink-100 dark:border-pink-900/40 text-gray-800 dark:text-gray-100">
+              <div className="flex items-center justify-between pb-3 border-b border-pink-100 dark:border-pink-900/40">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-pink-100 flex items-center justify-center text-pink-600">
+                  <div className="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-900/50 flex items-center justify-center text-pink-600 dark:text-pink-400">
                     <Smartphone className="w-4 h-4" />
                   </div>
-                  <h3 className="font-bold text-base text-gray-900">{t.iosInstallTitle}</h3>
+                  <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">{t.iosInstallTitle}</h3>
                 </div>
                 <button
                   onClick={() => setShowIOSModal(false)}
-                  className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="mt-4 space-y-3.5 text-xs text-gray-600">
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-pink-50/60 border border-pink-100">
-                  <div className="p-2 rounded-xl bg-white text-blue-500 shadow-sm shrink-0">
+              <div className="mt-4 space-y-3.5 text-xs text-gray-600 dark:text-gray-300">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-pink-50/60 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/30">
+                  <div className="p-2 rounded-xl bg-white dark:bg-[#201e2b] text-blue-500 shadow-sm shrink-0">
                     <Share2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">ধাপ ১ / Step 1</p>
-                    <p className="mt-0.5">{t.iosStep1}</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">ধাপ ১ / Step 1</p>
+                    <p className="mt-0.5 text-gray-600 dark:text-gray-400">{t.iosStep1}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-2xl bg-pink-50/60 border border-pink-100">
-                  <div className="p-2 rounded-xl bg-white text-pink-600 shadow-sm shrink-0">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-pink-50/60 dark:bg-pink-950/30 border border-pink-100 dark:border-pink-900/30">
+                  <div className="p-2 rounded-xl bg-white dark:bg-[#201e2b] text-pink-600 dark:text-pink-400 shadow-sm shrink-0">
                     <PlusSquare className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">ধাপ ২ / Step 2</p>
-                    <p className="mt-0.5">{t.iosStep2}</p>
+                    <p className="font-semibold text-gray-800 dark:text-gray-200">ধাপ ২ / Step 2</p>
+                    <p className="mt-0.5 text-gray-600 dark:text-gray-400">{t.iosStep2}</p>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowIOSModal(false)}
-                className="mt-5 w-full rounded-2xl bg-pink-600 py-3 text-sm font-bold text-white shadow-md shadow-pink-200 hover:bg-pink-700 active:scale-95 transition-all cursor-pointer"
+                className="mt-5 w-full rounded-2xl bg-pink-600 py-3 text-sm font-bold text-white shadow-md shadow-pink-200 dark:shadow-none hover:bg-pink-700 active:scale-95 transition-all cursor-pointer"
               >
                 {t.close}
               </button>

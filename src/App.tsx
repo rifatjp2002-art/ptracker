@@ -33,6 +33,10 @@ import { HistoryList } from './components/HistoryList';
 import { CycleFormModal } from './components/CycleFormModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { CycleTrendChart } from './components/CycleTrendChart';
+import { LockScreen } from './components/LockScreen';
+import { PinLockModal } from './components/PinLockModal';
+import { isPinLockEnabled, isAppUnlocked, setAppUnlocked } from './utils/security';
 
 import { 
   LayoutDashboard, 
@@ -41,25 +45,35 @@ import {
   Plus, 
   Heart,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Cloud,
+  ExternalLink,
+  X,
+  ShieldCheck,
+  Sparkles,
+  Loader2,
+  LogIn
 } from 'lucide-react';
 
 const GUEST_STORAGE_KEY = 'guest_cycle_records';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Guest Mode flag (true if user opted to continue without login)
-  const [isGuest, setIsGuest] = useState<boolean>(() => {
-    return localStorage.getItem('period_tracker_guest_mode') === 'true';
-  });
+  const [isGuest, setIsGuest] = useState<boolean>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [popupBlocked, setPopupBlocked] = useState(false);
 
   // App Focus Mode: 'track' (General Cycle) vs 'conceive' (TTC / Fertility Window)
   const [appMode, setAppMode] = useState<AppMode>(() => {
     const saved = localStorage.getItem('period_tracker_app_mode');
     return (saved === 'conceive' || saved === 'track') ? saved : 'track';
+  });
+
+  // Theme Mode: 'system' (device preference) | 'dark' | 'light'
+  const [themeMode, setThemeMode] = useState<'system' | 'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('period_tracker_theme');
+    return (saved === 'dark' || saved === 'light' || saved === 'system') ? saved : 'system';
   });
 
   // Notification Reminder State
@@ -76,15 +90,12 @@ export default function App() {
 
   // Cycle Records (from Firestore if logged in, or localStorage if in guest mode)
   const [records, setRecords] = useState<CycleRecord[]>(() => {
-    if (!auth.currentUser && localStorage.getItem('period_tracker_guest_mode') === 'true') {
-      try {
-        const stored = localStorage.getItem(GUEST_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-      } catch {
-        return [];
-      }
+    try {
+      const stored = localStorage.getItem(GUEST_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
     }
-    return [];
   });
 
   // Active Tab: 'dashboard' | 'calendar' | 'history'
@@ -96,6 +107,23 @@ export default function App() {
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Security PIN Lock & Privacy State
+  const [isPinActive, setIsPinActive] = useState<boolean>(() => isPinLockEnabled());
+  const [isLocked, setIsLocked] = useState<boolean>(() => isPinLockEnabled() && !isAppUnlocked());
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+
+  // Auto-lock when browser tab/app is minimized or hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isPinLockEnabled()) {
+        setAppUnlocked(false);
+        setIsLocked(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   const t = getTranslation(language);
 
@@ -135,6 +163,55 @@ export default function App() {
     }
   };
 
+  // Listen to device settings / user preference for dark/light mode
+  useEffect(() => {
+    try {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const applyTheme = () => {
+        let isDark = false;
+        if (themeMode === 'system') {
+          isDark = mq.matches;
+        } else if (themeMode === 'dark') {
+          isDark = true;
+        } else {
+          isDark = false;
+        }
+
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+          document.documentElement.style.colorScheme = 'light';
+        }
+
+        // Update mobile browser status bar theme-color
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]:not([media])');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', isDark ? '#121118' : '#FFF0F4');
+        }
+      };
+
+      applyTheme();
+
+      const listener = () => {
+        if (themeMode === 'system') {
+          applyTheme();
+        }
+      };
+
+      mq.addEventListener('change', listener);
+      return () => mq.removeEventListener('change', listener);
+    } catch {}
+  }, [themeMode]);
+
+  const handleSelectTheme = (mode: 'system' | 'dark' | 'light') => {
+    setThemeMode(mode);
+    localStorage.setItem('period_tracker_theme', mode);
+  };
+
   // Monitor Online/Offline connection
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -153,11 +230,9 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      setAuthLoading(false);
 
       if (currentUser) {
         setIsGuest(false);
-        localStorage.removeItem('period_tracker_guest_mode');
 
         // Check if there are local guest records to migrate into Firestore
         const guestDataStr = localStorage.getItem(GUEST_STORAGE_KEY);
@@ -170,7 +245,7 @@ export default function App() {
                 await addDoc(cyclesRef, {
                   userId: currentUser.uid,
                   startDate: rec.startDate,
-                  durationDays: rec.durationDays || 5,
+                  durationDays: rec.durationDays || 3,
                   flow: rec.flow || 'medium',
                   symptoms: rec.symptoms || [],
                   notes: rec.notes || '',
@@ -185,16 +260,13 @@ export default function App() {
           }
         }
       } else {
-        // If not logged in, check if in guest mode
-        if (localStorage.getItem('period_tracker_guest_mode') === 'true') {
-          setIsGuest(true);
-          try {
-            const stored = localStorage.getItem(GUEST_STORAGE_KEY);
-            if (stored) {
-              setRecords(JSON.parse(stored));
-            }
-          } catch {}
-        }
+        setIsGuest(true);
+        try {
+          const stored = localStorage.getItem(GUEST_STORAGE_KEY);
+          if (stored) {
+            setRecords(JSON.parse(stored));
+          }
+        } catch {}
       }
     });
     return () => unsubscribe();
@@ -220,7 +292,7 @@ export default function App() {
             id: docSnap.id,
             userId: user.uid,
             startDate: data.startDate,
-            durationDays: data.durationDays || 5,
+            durationDays: data.durationDays || 3,
             flow: data.flow,
             symptoms: data.symptoms || [],
             notes: data.notes || '',
@@ -253,27 +325,27 @@ export default function App() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoggingIn(true);
+      setPopupBlocked(false);
       await signInWithPopup(auth, googleProvider);
+      setIsAuthModalOpen(false);
+      showToast(
+        language === 'bn' 
+          ? 'গুগল একাউন্টে সফলভাবে সাইন ইন হয়েছে!' 
+          : 'Signed in with Google successfully!', 
+        'success'
+      );
     } catch (err: any) {
-      console.error('Google Sign-In Error:', err);
-      showToast(t.errorSaving, 'error');
+      console.warn('Google Sign-In Error:', err);
+      setPopupBlocked(true);
+      setIsAuthModalOpen(true);
+      showToast(
+        language === 'bn' 
+          ? 'ব্রাউজারে পপআপ ব্লক থাকতে পারে। নিচের নির্দেশনাটি দেখুন।' 
+          : 'Popup may be blocked. Please check the instructions.', 
+        'error'
+      );
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-
-  const handleGuestLogin = () => {
-    setIsGuest(true);
-    localStorage.setItem('period_tracker_guest_mode', 'true');
-    try {
-      const stored = localStorage.getItem(GUEST_STORAGE_KEY);
-      if (stored) {
-        setRecords(JSON.parse(stored));
-      } else {
-        setRecords([]);
-      }
-    } catch {
-      setRecords([]);
     }
   };
 
@@ -282,9 +354,15 @@ export default function App() {
       if (user) {
         await signOut(auth);
       }
-      setIsGuest(false);
-      localStorage.removeItem('period_tracker_guest_mode');
-      setRecords([]);
+      setUser(null);
+      setIsGuest(true);
+      try {
+        const stored = localStorage.getItem(GUEST_STORAGE_KEY);
+        setRecords(stored ? JSON.parse(stored) : []);
+      } catch {
+        setRecords([]);
+      }
+      showToast(language === 'bn' ? 'লগআউট সফল হয়েছে' : 'Logged out', 'success');
     } catch (err) {
       console.error('Logout error:', err);
     }
@@ -403,7 +481,7 @@ export default function App() {
       setSelectedRecordForEdit({
         userId: user?.uid || 'guest',
         startDate: dateStr,
-        durationDays: 5,
+        durationDays: 3,
         flow: 'medium',
         symptoms: [],
         notes: '',
@@ -412,56 +490,70 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FCE4EC]/30">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-400 flex items-center justify-center text-white animate-bounce shadow-lg shadow-pink-200">
-            <Heart className="w-6 h-6 fill-white" />
-          </div>
-          <p className="text-xs font-bold text-pink-600">
-            {language === 'bn' ? 'লোড হচ্ছে...' : 'Loading Period Tracker...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const isAppAccessible = Boolean(user || isGuest);
   const displayName = user?.displayName || (isGuest ? (language === 'bn' ? 'গেস্ট ব্যবহারকারী' : 'Guest User') : 'User');
 
   return (
-    <div className="min-h-screen pb-24 font-sans text-gray-800 bg-[#FCE4EC]/20 antialiased selection:bg-pink-200">
+    <div className="min-h-screen pb-28 font-sans text-gray-800 dark:text-gray-100 bg-[#FFF0F4] dark:bg-[#121118] antialiased selection:bg-pink-200 overflow-x-hidden">
       {/* Top Header */}
       <Header
         user={user}
         isGuest={isGuest}
         language={language}
         onLanguageToggle={handleLanguageToggle}
+        onSelectLanguage={(lang) => {
+          setLanguage(lang);
+          localStorage.setItem('period_tracker_lang', lang);
+        }}
         isOnline={isOnline}
         onLogout={handleLogout}
-        onPromptLogin={handleGoogleLogin}
+        onPromptLogin={() => {
+          setPopupBlocked(false);
+          setIsAuthModalOpen(true);
+        }}
         onToggleReminders={handleToggleReminders}
         remindersActive={remindersActive}
+        themeMode={themeMode}
+        onSelectTheme={handleSelectTheme}
+        isPinActive={isPinActive}
+        onOpenPinLockModal={() => setIsPinModalOpen(true)}
+        onTriggerLockNow={() => {
+          setAppUnlocked(false);
+          setIsLocked(true);
+        }}
       />
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+      <main className="max-w-2xl mx-auto px-3.5 sm:px-4 py-4 space-y-4">
         {/* PWA Install Prompt Banner */}
         <PWAInstallButton language={language} variant="banner" />
 
-        {!isAppAccessible ? (
-          /* Logged Out / Intro Screen */
-          <LoginScreen
-            language={language}
-            onLogin={handleGoogleLogin}
-            onGuestLogin={handleGuestLogin}
-            isLoading={isLoggingIn}
-          />
-        ) : (
-          /* Dashboard & Views */
-          <div className="space-y-6">
-            {activeTab === 'dashboard' && (
+        {/* Offline notice bar for Guest */}
+        {isGuest && (
+          <div className="bg-white/90 dark:bg-[#1c1a26]/90 backdrop-blur-xs border border-pink-100 dark:border-pink-950/50 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                {language === 'bn' 
+                  ? 'লোকাল মোড সক্রিয় (ইন্টারনেট ছাড়াও ১০০% কাজ করবে)' 
+                  : 'Local Offline Mode Active (100% functional without internet)'}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setPopupBlocked(false);
+                setIsAuthModalOpen(true);
+              }}
+              className="text-xs font-bold text-pink-600 hover:text-pink-700 bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/50 dark:text-pink-300 px-3 py-1.5 rounded-xl border border-pink-200 dark:border-pink-800 transition-colors cursor-pointer shrink-0"
+            >
+              {language === 'bn' ? '☁️ গুগল ব্যাকআপ' : '☁️ Cloud Backup'}
+            </button>
+          </div>
+        )}
+
+        {/* Dashboard & Views */}
+        <div className="space-y-6">
+          {activeTab === 'dashboard' && (
+            <div className="space-y-4">
               <DashboardCard
                 prediction={predictionResult}
                 language={language}
@@ -469,18 +561,30 @@ export default function App() {
                 appMode={appMode}
                 onModeChange={handleModeChange}
               />
-            )}
-
-            {activeTab === 'calendar' && (
-              <CalendarView
+              <CycleTrendChart
                 records={records}
                 prediction={predictionResult}
                 language={language}
-                onSelectDate={handleCalendarDateSelect}
               />
-            )}
+            </div>
+          )}
 
-            {activeTab === 'history' && (
+          {activeTab === 'calendar' && (
+            <CalendarView
+              records={records}
+              prediction={predictionResult}
+              language={language}
+              onSelectDate={handleCalendarDateSelect}
+            />
+          )}
+
+          {activeTab === 'history' && (
+            <div className="space-y-4">
+              <CycleTrendChart
+                records={records}
+                prediction={predictionResult}
+                language={language}
+              />
               <HistoryList
                 records={records}
                 prediction={predictionResult}
@@ -490,9 +594,9 @@ export default function App() {
                 onDeleteRecord={handleDeleteRecord}
                 onOpenLogModal={handleOpenNewLog}
               />
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Toast Banner Notification */}
@@ -508,60 +612,159 @@ export default function App() {
       )}
 
       {/* Floating Log Entry FAB */}
-      {isAppAccessible && (
-        <div className="fixed bottom-20 right-4 sm:right-8 z-40">
-          <button
-            onClick={handleOpenNewLog}
-            className="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 text-white shadow-xl shadow-pink-600/40 flex items-center justify-center transition-all transform active:scale-90 cursor-pointer"
-            aria-label={t.logPeriodTitle}
-            title={t.logPeriodTitle}
-          >
-            <Plus className="w-7 h-7 stroke-[2.5]" />
-          </button>
-        </div>
-      )}
+      <div className="fixed bottom-20 right-4 sm:right-8 z-40">
+        <button
+          onClick={handleOpenNewLog}
+          className="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 text-white shadow-xl shadow-pink-600/40 flex items-center justify-center transition-all transform active:scale-90 cursor-pointer"
+          aria-label={t.logPeriodTitle}
+          title={t.logPeriodTitle}
+        >
+          <Plus className="w-7 h-7 stroke-[2.5]" />
+        </button>
+      </div>
 
       {/* Bottom Touch-Friendly Navigation Bar */}
-      {isAppAccessible && (
-        <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-pink-100 shadow-lg px-2 py-1">
-          <div className="max-w-md mx-auto flex items-center justify-around">
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
-                activeTab === 'dashboard'
-                  ? 'text-pink-600 bg-pink-50'
-                  : 'text-gray-500 hover:text-pink-500'
-              }`}
-            >
-              <LayoutDashboard className="w-5 h-5 mb-0.5" />
-              <span>{t.tabDashboard}</span>
-            </button>
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-[#16151e]/95 backdrop-blur-md border-t border-pink-100 dark:border-pink-950/40 shadow-lg px-2 py-1 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] transition-colors">
+        <div className="max-w-md mx-auto flex items-center justify-around">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
+              activeTab === 'dashboard'
+                ? 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/50'
+                : 'text-gray-500 dark:text-gray-400 hover:text-pink-500'
+            }`}
+          >
+            <LayoutDashboard className="w-5 h-5 mb-0.5" />
+            <span>{t.tabDashboard}</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('calendar')}
-              className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
-                activeTab === 'calendar'
-                  ? 'text-pink-600 bg-pink-50'
-                  : 'text-gray-500 hover:text-pink-500'
-              }`}
-            >
-              <Calendar className="w-5 h-5 mb-0.5" />
-              <span>{t.tabCalendar}</span>
-            </button>
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
+              activeTab === 'calendar'
+                ? 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/50'
+                : 'text-gray-500 dark:text-gray-400 hover:text-pink-500'
+            }`}
+          >
+            <Calendar className="w-5 h-5 mb-0.5" />
+            <span>{t.tabCalendar}</span>
+          </button>
 
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
-                activeTab === 'history'
-                  ? 'text-pink-600 bg-pink-50'
-                  : 'text-gray-500 hover:text-pink-500'
-              }`}
-            >
-              <History className="w-5 h-5 mb-0.5" />
-              <span>{t.tabHistory}</span>
-            </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`min-h-[48px] px-4 py-1.5 rounded-2xl flex flex-col items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
+              activeTab === 'history'
+                ? 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/50'
+                : 'text-gray-500 dark:text-gray-400 hover:text-pink-500'
+            }`}
+          >
+            <History className="w-5 h-5 mb-0.5" />
+            <span>{t.tabHistory}</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Cloud Sync & Google Sign-In Modal */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-white dark:bg-[#1a1924] rounded-3xl p-6 shadow-2xl border border-pink-100 dark:border-pink-900/40 space-y-5 animate-scale-up text-gray-800 dark:text-gray-100">
+            {/* Top Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-pink-600 to-rose-500 text-white shadow-md shadow-pink-200 dark:shadow-none">
+                  <Cloud className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg">
+                    {language === 'bn' ? 'গুগল ক্লাউড সিঙ্ক ও ব্যাকআপ' : 'Google Cloud Sync'}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    {language === 'bn' ? 'আপনার পিরিয়ড ডাটা নিরাপদে সংরক্ষণ করুন' : 'Safely backup and access from any device'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAuthModalOpen(false)}
+                className="p-2 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Info Points */}
+            <div className="space-y-2 text-xs text-gray-700 dark:text-gray-300 bg-pink-50/60 dark:bg-pink-950/30 p-3.5 rounded-2xl border border-pink-100/80 dark:border-pink-900/30">
+              <div className="flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-pink-600 dark:text-pink-400 mt-0.5 shrink-0" />
+                <span>
+                  {language === 'bn' 
+                    ? 'ফোন পরিবর্তন বা হিস্ট্রি ক্লিয়ার করলেও কোনো ডাটা হারাবে না।' 
+                    : 'Never lose your logs even if you change devices or clear cache.'}
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-pink-600 dark:text-pink-400 mt-0.5 shrink-0" />
+                <span>
+                  {language === 'bn' 
+                    ? 'বর্তমান অফলাইন এন্ট্রিগুলো স্বয়ংক্রিয়ভাবে ক্লাউডে যুক্ত হয়ে যাবে।' 
+                    : 'Your current offline entries will automatically sync into your account.'}
+                </span>
+              </div>
+            </div>
+
+            {/* If Popup is Blocked Alert */}
+            {popupBlocked && (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl text-xs space-y-2 text-amber-900 dark:text-amber-200">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold">
+                      {language === 'bn' ? 'ব্রাউজার বা আইফ্রেম পপআপ আটকে দিয়েছে!' : 'Browser popup was blocked!'}
+                    </p>
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                      {language === 'bn'
+                        ? 'আইফ্রেম প্রিভিউতে সিকিউরিটির কারণে Google লগইন পপআপ ব্লক হতে পারে। নিচের বাটনে ক্লিক করে অ্যাপটি সরাসরি নতুন উইন্ডোতে ওপেন করুন, অথবা কোনো সাইন ইন ছাড়াই ১০০% অফলাইনে ব্যবহার করুন।'
+                        : 'The preview iframe prevents Google login popups. Click below to open in a new window, or continue using the app fully offline.'}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-1">
+                  <button
+                    onClick={() => window.open(window.location.href, '_blank')}
+                    className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{language === 'bn' ? '🌐 নতুন উইন্ডোতে খুলুন (Open in New Tab)' : '🌐 Open in New Tab'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoggingIn}
+                className="w-full min-h-[48px] px-5 py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-sm shadow-lg shadow-pink-200 dark:shadow-none flex items-center justify-center gap-2.5 transition-all transform active:scale-98 disabled:opacity-70 cursor-pointer"
+              >
+                {isLoggingIn ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4" />
+                    <span>{t.loginWithGoogle}</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsAuthModalOpen(false)}
+                className="w-full py-2.5 px-4 rounded-xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 text-xs font-semibold text-center transition-colors cursor-pointer"
+              >
+                {language === 'bn' ? '✅ অফলাইনে নিশ্চিন্তে ব্যবহার করুন' : 'Continue using offline'}
+              </button>
+            </div>
           </div>
-        </nav>
+        </div>
       )}
 
       {/* Cycle Entry Modal */}
@@ -579,6 +782,29 @@ export default function App() {
 
       {/* Offline Status Persistent Toast Banner */}
       <OfflineIndicator isOnline={isOnline} language={language} />
+
+      {/* App Privacy PIN Lock Modal */}
+      <PinLockModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        language={language}
+        onPinConfigured={() => {
+          setIsPinActive(isPinLockEnabled());
+        }}
+        onTriggerLockNow={() => {
+          setAppUnlocked(false);
+          setIsLocked(true);
+        }}
+      />
+
+      {/* Fullscreen Privacy Lock Screen Overlay */}
+      {isLocked && (
+        <LockScreen
+          language={language}
+          userEmail={user?.email}
+          onUnlocked={() => setIsLocked(false)}
+        />
+      )}
     </div>
   );
 }

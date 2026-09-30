@@ -40,7 +40,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Helper set of period dates from logged records
   const loggedPeriodDates = new Set<string>();
   records.forEach(rec => {
-    const dur = rec.durationDays || 5;
+    const dur = rec.durationDays || 3;
     for (let i = 0; i < dur; i++) {
       loggedPeriodDates.add(addDays(rec.startDate, i));
     }
@@ -49,7 +49,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   // Predicted period dates
   const predictedPeriodDates = new Set<string>();
   if (prediction.nextStartDate) {
-    const dur = 5; // Default predicted length
+    const latestRecord = records.length > 0 ? records[records.length - 1] : null;
+    const dur = latestRecord?.durationDays || 3; // Default 3 days predicted length
     for (let i = 0; i < dur; i++) {
       predictedPeriodDates.add(addDays(prediction.nextStartDate, i));
     }
@@ -74,11 +75,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const toBnNum = (n: number) => String(n).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[Number(d)]);
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-md shadow-pink-100/60 border border-pink-100/80 space-y-4">
+    <div className="bg-white dark:bg-[#1a1924] rounded-3xl p-5 sm:p-6 shadow-md shadow-pink-100/60 dark:shadow-none border border-pink-100/80 dark:border-pink-950/40 space-y-4">
       {/* Month Header Navigation */}
       <div className="flex items-center justify-between">
-        <h3 className="font-extrabold text-gray-900 text-lg flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-pink-600" />
+        <h3 className="font-extrabold text-gray-900 dark:text-gray-100 text-lg flex items-center gap-2">
+          <CalendarIcon className="w-5 h-5 text-pink-600 dark:text-pink-400" />
           <span>
             {language === 'bn'
               ? `${monthNamesBn[month]} ${toBnNum(year)}`
@@ -89,14 +90,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={prevMonth}
-            className="min-h-[44px] min-w-[44px] p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer flex items-center justify-center"
+            className="min-h-[44px] min-w-[44px] p-2 rounded-full hover:bg-pink-50 dark:hover:bg-pink-950/50 text-gray-600 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors cursor-pointer flex items-center justify-center"
             aria-label="Previous Month"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={nextMonth}
-            className="min-h-[44px] min-w-[44px] p-2 rounded-full hover:bg-pink-50 text-gray-600 hover:text-pink-600 transition-colors cursor-pointer flex items-center justify-center"
+            className="min-h-[44px] min-w-[44px] p-2 rounded-full hover:bg-pink-50 dark:hover:bg-pink-950/50 text-gray-600 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 transition-colors cursor-pointer flex items-center justify-center"
             aria-label="Next Month"
           >
             <ChevronRight className="w-5 h-5" />
@@ -105,23 +106,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-600 flex-wrap pb-1">
+      <div className="flex items-center gap-3 text-[11px] font-semibold text-gray-600 dark:text-gray-400 flex-wrap pb-1">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-rose-600 inline-block" />
           <span>{language === 'bn' ? 'পিরিয়ড তারিখ' : 'Period Logged'}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-pink-200 border border-dashed border-pink-500 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-pink-200 dark:bg-pink-900/60 border border-dashed border-pink-500 inline-block" />
           <span>{language === 'bn' ? 'পূর্বাভাসকৃত পিরিয়ড' : 'Predicted Period'}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-amber-200 border border-amber-400 inline-block" />
+          <span className="w-3 h-3 rounded-full bg-amber-200 dark:bg-amber-900/60 border border-amber-400 inline-block" />
           <span>{language === 'bn' ? 'ফার্টাইল সময়' : 'Fertile Window'}</span>
         </div>
       </div>
 
       {/* Weekdays Row */}
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-600 uppercase pb-1 border-b border-gray-100">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-600 dark:text-gray-400 uppercase pb-1 border-b border-gray-100 dark:border-gray-800">
         {(language === 'bn' ? daysOfWeekBn : daysOfWeekEn).map(day => (
           <div key={day} className="py-1">
             {day}
@@ -153,13 +154,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               onClick={() => onSelectDate(dateStr)}
               className={`h-10 sm:h-12 rounded-2xl flex flex-col items-center justify-center relative transition-all cursor-pointer font-bold text-xs sm:text-sm active:scale-95 ${
                 isLoggedPeriod
-                  ? 'bg-rose-600 text-white shadow-xs shadow-rose-300'
+                  ? 'bg-rose-600 text-white shadow-xs shadow-rose-300 dark:shadow-none'
                   : isPredictedPeriod
-                  ? 'bg-pink-100/80 text-pink-900 border-2 border-dashed border-pink-400'
+                  ? 'bg-pink-100/80 dark:bg-pink-950/60 text-pink-900 dark:text-pink-200 border-2 border-dashed border-pink-400'
                   : isFertile
-                  ? 'bg-amber-100/80 text-amber-900 border border-amber-300'
-                  : 'hover:bg-pink-50/60 text-gray-800'
-              } ${isToday ? 'ring-2 ring-pink-600 ring-offset-1 font-extrabold' : ''}`}
+                  ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
+                  : 'hover:bg-pink-50/60 dark:hover:bg-pink-950/40 text-gray-800 dark:text-gray-200'
+              } ${isToday ? 'ring-2 ring-pink-600 ring-offset-1 dark:ring-offset-gray-900 font-extrabold' : ''}`}
             >
               <span>{language === 'bn' ? toBnNum(dayNum) : dayNum}</span>
 

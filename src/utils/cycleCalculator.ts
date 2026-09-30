@@ -38,6 +38,24 @@ export function addDays(dateStr: string, daysToAdd: number): string {
 }
 
 /**
+ * Convert numbers/digits into Bengali digits
+ */
+export function toBengaliDigits(val: number | string): string {
+  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(val).replace(/[0-9]/g, (d) => bnDigits[Number(d)]);
+}
+
+/**
+ * Format a number or numeric string according to language
+ */
+export function formatNumber(val: number | string, lang: 'en' | 'bn'): string {
+  if (lang === 'bn') {
+    return toBengaliDigits(val);
+  }
+  return String(val);
+}
+
+/**
  * Format a date string in localized display format
  */
 export function formatDisplayDate(dateStr: string, lang: 'en' | 'bn'): string {
@@ -51,8 +69,7 @@ export function formatDisplayDate(dateStr: string, lang: 'en' | 'bn'): string {
   const year = d.getFullYear();
 
   if (lang === 'bn') {
-    const toBnNum = (n: number) => String(n).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[Number(d)]);
-    return `${toBnNum(day)} ${monthNamesBn[monthIndex]}, ${toBnNum(year)}`;
+    return `${toBengaliDigits(day)} ${monthNamesBn[monthIndex]}, ${toBengaliDigits(year)}`;
   }
   return `${monthNamesEn[monthIndex]} ${day}, ${year}`;
 }
@@ -183,7 +200,7 @@ export function calculateCyclePredictions(records: CycleRecord[]): PredictionRes
   const currentCycleDay = Math.max(1, daysSinceLast + 1);
 
   // Active Period Detection
-  const duration = latestRecord.durationDays || 5;
+  const duration = latestRecord.durationDays || 3;
   const isPeriodActive = daysSinceLast >= 0 && daysSinceLast < duration;
   const activePeriodDay = isPeriodActive ? daysSinceLast + 1 : 0;
 
