@@ -1,22 +1,26 @@
-const CACHE_NAME = 'period-tracker-pwa-v2';
+const CACHE_NAME = 'period-tracker-pwa-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.svg',
-  '/favicon-32x32.png',
-  '/apple-touch-icon.png',
-  '/pwa-192x192.png',
-  '/pwa-512x512.png',
-  '/pwa-maskable-512x512.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.svg',
+  './favicon-32x32.png',
+  './apple-touch-icon.png',
+  './pwa-192x192.png',
+  './pwa-512x512.png',
+  './pwa-maskable-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((err) => {
-        console.warn('Pre-caching assets notice:', err);
-      });
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of STATIC_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn('Pre-caching asset skipped:', asset, err);
+        }
+      }
     })
   );
   self.skipWaiting();
@@ -27,7 +31,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
+          if (cache !== CACHE_NAME && cache !== 'period-tracker-fonts') {
             return caches.delete(cache);
           }
         })
@@ -38,7 +42,7 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Ignore non-GET requests or Firebase Firestore / Auth real-time traffic
+  // Ignore non-GET requests or Firebase / Auth real-time traffic
   if (
     event.request.method !== 'GET' ||
     event.request.url.includes('firestore.googleapis.com') ||
@@ -49,7 +53,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle Google Fonts
+  // Handle Google Fonts caching
   if (
     event.request.url.includes('fonts.googleapis.com') ||
     event.request.url.includes('fonts.gstatic.com')
@@ -65,14 +69,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         } catch {
-          return cached;
+          return cached || new Response('', { status: 408, statusText: 'Offline' });
         }
       })
     );
     return;
   }
 
-  // Stale-while-revalidate for local assets and HTML
+  // Network-first with Cache fallback for general assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -90,13 +94,33 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // If offline and request is an HTML page navigation, return root index
+          // If offline and request is an HTML page navigation, return cached root or index
           if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/');
+            return caches.match('./index.html').then((r) => r || caches.match('./') || caches.match('/'));
           }
+          return cachedResponse;
         });
 
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// Listen for notifications
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) {
+            return;
+          }
+        }
+        return client.focus();
+      }
+      return clients.openWindow('./');
     })
   );
 });
