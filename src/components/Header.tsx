@@ -17,9 +17,11 @@ import {
   Smartphone,
   Moon,
   Sun,
-  Lock
+  Lock,
+  Download
 } from 'lucide-react';
 import { User } from 'firebase/auth';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   user: User | null;
@@ -37,6 +39,7 @@ interface HeaderProps {
   isPinActive?: boolean;
   onOpenPinLockModal?: () => void;
   onTriggerLockNow?: () => void;
+  onOpenNotificationModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -55,6 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   isPinActive = false,
   onOpenPinLockModal,
   onTriggerLockNow,
+  onOpenNotificationModal,
 }) => {
   const t = getTranslation(language);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -109,8 +113,11 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right Action Icons: Notification Bell & Google Avatar Profile Button */}
+        {/* Right Action Icons: Install, Notification Bell & Google Avatar Profile Button */}
         <div className="flex items-center gap-2 relative shrink-0" ref={menuRef}>
+          {/* Header PWA Install Button */}
+          <PWAInstallButton language={language} variant="header" />
+
           {/* Notification Reminder Bell Icon */}
           <button
             onClick={onToggleReminders}
@@ -391,18 +398,29 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs py-1.5">
                   <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 font-medium">
                     <Bell className="w-3.5 h-3.5 text-rose-500" />
-                    <span>{language === 'bn' ? 'প্রতিদিনের রিমাইন্ডার' : 'Daily Reminders'}</span>
+                    <span>{language === 'bn' ? 'স্মার্ট রিমাইন্ডার' : 'Smart Reminders'}</span>
                   </span>
-                  <button
-                    onClick={onToggleReminders}
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors cursor-pointer ${
-                      remindersActive
-                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                    }`}
-                  >
-                    {remindersActive ? (language === 'bn' ? 'চালু' : 'ON') : (language === 'bn' ? 'বন্ধ' : 'OFF')}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onOpenNotificationModal?.();
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors cursor-pointer ${
+                        remindersActive
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-pink-50 dark:hover:bg-pink-950/30'
+                      }`}
+                    >
+                      {remindersActive ? (language === 'bn' ? 'সক্রিয়' : 'Active') : (language === 'bn' ? 'সেট করুন' : 'Setup')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* PWA Install in Menu */}
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+                  <PWAInstallButton language={language} variant="menu-item" />
                 </div>
 
                 {/* Logout Button if Logged In */}

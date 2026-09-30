@@ -2,13 +2,33 @@
  * Security & App Privacy Lock Utilities
  * Supports:
  * 1. 4-Digit PIN with SHA-256 Hashing
- * 2. Biometric Authentication (WebAuthn / Fingerprint / Face ID)
+ * 2. Device Biometric Authentication (WebAuthn / Fingerprint / Face ID / Screen Lock)
  * 3. Auto-Lock on Visibility Change / App Backgrounding
  */
 
 const PIN_STORAGE_KEY = 'period_tracker_pin_hash';
 const BIOMETRIC_STORAGE_KEY = 'period_tracker_bio_enabled';
+const BIOMETRIC_CRED_ID_KEY = 'period_tracker_bio_cred_id';
 const LOCK_STATE_SESSION_KEY = 'period_tracker_is_unlocked';
+
+// Helper: Uint8Array <-> Base64
+function bufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+function base64ToBuffer(base64: string): ArrayBuffer {
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
 
 /**
  * SHA-256 Hash a PIN string so plain PIN is never stored
@@ -46,6 +66,7 @@ export async function saveNewPin(pin: string): Promise<void> {
 export function removePinLock(): void {
   localStorage.removeItem(PIN_STORAGE_KEY);
   localStorage.removeItem(BIOMETRIC_STORAGE_KEY);
+  localStorage.removeItem(BIOMETRIC_CRED_ID_KEY);
   sessionStorage.removeItem(LOCK_STATE_SESSION_KEY);
 }
 
@@ -80,21 +101,37 @@ export function setAppUnlocked(unlocked: boolean): void {
  */
 export async function isBiometricsSupported(): Promise<boolean> {
   try {
-    if (window.PublicKeyCredential && 
-        typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function') {
+    if (
+      window.PublicKeyCredential &&
+      typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
+    ) {
       return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     }
   } catch (e) {
-    console.debug('Biometric check notice:', e);
+    console.debug('Biometric support check notice:', e);
   }
   return false;
 }
 
 /**
- * Check if user enabled biometric unlock
+ * Check if user has enabled biometric unlock
  */
 export function isBiometricsEnabled(): boolean {
   return localStorage.getItem(BIOMETRIC_STORAGE_KEY) === 'true';
+}
+
+/**
+ * Check if a registered biometric credential exists
+ */
+export function hasBiometricCredential(): boolean {
+  return !!localStorage.getItem(BIOMETRIC_CRED_ID_KEY);
+}
+
+/**
+ * Check if biometrics is fully configured and ready for 1-touch unlock
+ */
+export function isBiometricsConfigured(): boolean {
+  return isBiometricsEnabled() && hasBiometricCredential();
 }
 
 /**
@@ -105,58 +142,29 @@ export function setBiometricsEnabled(enabled: boolean): void {
     localStorage.setItem(BIOMETRIC_STORAGE_KEY, 'true');
   } else {
     localStorage.removeItem(BIOMETRIC_STORAGE_KEY);
+    localStorage.removeItem(BIOMETRIC_CRED_ID_KEY);
   }
 }
 
 /**
- * Trigger Biometric Authentication prompt (Fingerprint / Face ID)
+ * Register biometric credential on device (Fingerprint / Face ID / PIN)
  */
-export async function authenticateWithBiometrics(): Promise<boolean> {
+export async function registerBiometrics(): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!window.PublicKeyCredential) return false;
-    
-    // Generate a random challenge
-    const challenge = new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    // Request assertion from device authenticator
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        timeout: 60000,
-        userVerification: 'preferred',
-        rpId: window.location.hostname || undefined,
-      }
-    });
-
-    if (assertion) {
-      setAppUnlocked(true);
-      return true;
+    if (!window.PublicKeyCredential) {
+      return { success: false, error: 'WebAuthn is not supported in this browser' };
     }
-  } catch (err: any) {
-    // If not registered yet or cancelled by user, catch silently
-    console.debug('Biometric authentication notice:', err);
-  }
-  return false;
-}
 
-/**
- * Register biometric credential on device
- */
-export async function registerBiometrics(): Promise<boolean> {
-  try {
-    if (!window.PublicKeyCredential) return false;
-    
     const challenge = new Uint8Array(32);
     const userId = new Uint8Array(16);
     crypto.getRandomValues(challenge);
     crypto.getRandomValues(userId);
 
-    const credential = await navigator.credentials.create({
+    const credential = (await navigator.credentials.create({
       publicKey: {
         challenge,
         rp: {
-          name: 'Period Tracker Privacy',
+          name: 'Period Tracker',
           id: window.location.hostname || undefined,
         },
         user: {
@@ -170,19 +178,73 @@ export async function registerBiometrics(): Promise<boolean> {
         ],
         authenticatorSelection: {
           authenticatorAttachment: 'platform',
-          userVerification: 'preferred',
+          userVerification: 'required',
+          residentKey: 'preferred',
           requireResidentKey: false,
         },
         timeout: 60000,
-      }
-    });
+        attestation: 'none',
+      },
+    })) as PublicKeyCredential | null;
 
-    if (credential) {
-      setBiometricsEnabled(true);
-      return true;
+    if (credential && credential.rawId) {
+      const credIdBase64 = bufferToBase64(credential.rawId);
+      localStorage.setItem(BIOMETRIC_CRED_ID_KEY, credIdBase64);
+      localStorage.setItem(BIOMETRIC_STORAGE_KEY, 'true');
+      return { success: true };
     }
   } catch (err: any) {
-    console.debug('Biometric registration error/cancel:', err);
+    console.warn('Biometric registration notice:', err);
+    return { 
+      success: false, 
+      error: err?.message || 'Biometric registration cancelled or not available' 
+    };
   }
-  return false;
+  return { success: false, error: 'Registration failed' };
+}
+
+/**
+ * Trigger Biometric Authentication prompt (Fingerprint / Face ID)
+ */
+export async function authenticateWithBiometrics(): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!window.PublicKeyCredential) {
+      return { success: false, error: 'Not supported' };
+    }
+
+    const savedCredId = localStorage.getItem(BIOMETRIC_CRED_ID_KEY);
+    if (!savedCredId) {
+      return { success: false, error: 'NO_CREDENTIAL' };
+    }
+
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    const allowCredentials: PublicKeyCredentialDescriptor[] = [
+      {
+        id: base64ToBuffer(savedCredId),
+        type: 'public-key',
+        transports: ['internal'],
+      },
+    ];
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        timeout: 60000,
+        userVerification: 'required',
+        rpId: window.location.hostname || undefined,
+        allowCredentials,
+      },
+    });
+
+    if (assertion) {
+      setAppUnlocked(true);
+      return { success: true };
+    }
+  } catch (err: any) {
+    console.debug('Biometric authentication error/cancelled:', err);
+    return { success: false, error: err?.name || err?.message || 'FAILED' };
+  }
+  return { success: false, error: 'FAILED' };
 }

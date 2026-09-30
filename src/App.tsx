@@ -36,6 +36,7 @@ import { PWAInstallButton } from './components/PWAInstallButton';
 import { CycleTrendChart } from './components/CycleTrendChart';
 import { LockScreen } from './components/LockScreen';
 import { PinLockModal } from './components/PinLockModal';
+import { NotificationModal } from './components/NotificationModal';
 import { isPinLockEnabled, isAppUnlocked, setAppUnlocked } from './utils/security';
 
 import { 
@@ -112,6 +113,7 @@ export default function App() {
   const [isPinActive, setIsPinActive] = useState<boolean>(() => isPinLockEnabled());
   const [isLocked, setIsLocked] = useState<boolean>(() => isPinLockEnabled() && !isAppUnlocked());
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
   // Auto-lock when browser tab/app is minimized or hidden
   useEffect(() => {
@@ -520,6 +522,7 @@ export default function App() {
           setAppUnlocked(false);
           setIsLocked(true);
         }}
+        onOpenNotificationModal={() => setIsNotificationModalOpen(true)}
       />
 
       {/* Main Content */}
@@ -794,6 +797,16 @@ export default function App() {
         onTriggerLockNow={() => {
           setAppUnlocked(false);
           setIsLocked(true);
+        }}
+      />
+
+      {/* Smart Notification & Reminder Modal */}
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        language={language}
+        onStatusChange={(enabled) => {
+          setRemindersActive(enabled);
         }}
       />
 

@@ -6,11 +6,11 @@ import {
   removePinLock, 
   verifyPin,
   isBiometricsSupported, 
-  isBiometricsEnabled, 
+  isBiometricsConfigured, 
   setBiometricsEnabled,
   registerBiometrics
 } from '../utils/security';
-import { Lock, ShieldCheck, X, KeyRound, Fingerprint, Trash2, Check, AlertCircle } from 'lucide-react';
+import { Lock, ShieldCheck, X, KeyRound, Fingerprint, Trash2, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface PinLockModalProps {
@@ -40,6 +40,8 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
   const [error, setError] = useState('');
   const [bioSupported, setBioSupported] = useState(false);
   const [bioActive, setBioActive] = useState(false);
+  const [bioLoading, setBioLoading] = useState(false);
+  const [bioFeedback, setBioFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -50,10 +52,11 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
       setNewPin('');
       setConfirmPin('');
       setError('');
+      setBioFeedback(null);
 
       isBiometricsSupported().then(supported => {
         setBioSupported(supported);
-        setBioActive(isBiometricsEnabled());
+        setBioActive(isBiometricsConfigured());
       });
     }
   }, [isOpen]);
@@ -132,18 +135,26 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
   };
 
   const handleToggleBiometrics = async () => {
+    setBioFeedback(null);
     if (!bioActive) {
-      const regSuccess = await registerBiometrics();
-      if (regSuccess) {
+      setBioLoading(true);
+      const res = await registerBiometrics();
+      setBioLoading(false);
+      if (res.success) {
         setBioActive(true);
+        setBioFeedback(isBn ? '✅ ফিঙ্গারপ্রিন্ট সফলভাবে যুক্ত হয়েছে!' : '✅ Biometrics registered successfully!');
       } else {
-        // Fallback simple toggle
-        setBiometricsEnabled(true);
-        setBioActive(true);
+        setBioActive(false);
+        setBioFeedback(
+          isBn
+            ? '⚠️ ফিঙ্গারপ্রিন্ট সেটআপ বাতিল হয়েছে বা ব্যর্থ হয়েছে।'
+            : '⚠️ Biometric enrollment was cancelled or failed.'
+        );
       }
     } else {
       setBiometricsEnabled(false);
       setBioActive(false);
+      setBioFeedback(isBn ? 'ফিঙ্গারপ্রিন্ট আনলক বন্ধ করা হয়েছে।' : 'Biometric unlock disabled.');
     }
   };
 
@@ -200,29 +211,38 @@ export const PinLockModal: React.FC<PinLockModalProps> = ({
 
             {/* Biometric Option if supported */}
             {bioSupported && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-[#201e2b] border border-gray-200 dark:border-gray-800 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <Fingerprint className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-                  <div>
-                    <p className="font-bold text-gray-800 dark:text-gray-200">
-                      {isBn ? 'ফিঙ্গারপ্রিন্ট / বায়োমেট্রিক' : 'Biometric / Fingerprint'}
-                    </p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                      {isBn ? 'আঙুলের ছোঁয়ায় দ্রুত আনলক' : 'Unlock using device biometrics'}
-                    </p>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-[#201e2b] border border-gray-200 dark:border-gray-800 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <Fingerprint className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                    <div>
+                      <p className="font-bold text-gray-800 dark:text-gray-200">
+                        {isBn ? 'ফিঙ্গারপ্রিন্ট / বায়োমেট্রিক' : 'Biometric / Fingerprint'}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {isBn ? 'আঙুলের ছোঁয়ায় দ্রুত আনলক' : 'Unlock using device biometrics'}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    disabled={bioLoading}
+                    onClick={handleToggleBiometrics}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      bioActive
+                        ? 'bg-pink-600 text-white shadow-xs'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}
+                  >
+                    {bioLoading && <RefreshCw className="w-3 h-3 animate-spin" />}
+                    <span>{bioActive ? (isBn ? 'চালু' : 'Enabled') : (isBn ? 'বন্ধ' : 'Off')}</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleToggleBiometrics}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    bioActive
-                      ? 'bg-pink-600 text-white shadow-xs'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}
-                >
-                  {bioActive ? (isBn ? 'চালু' : 'Enabled') : (isBn ? 'বন্ধ' : 'Off')}
-                </button>
+                {bioFeedback && (
+                  <p className="text-[11px] px-2 text-center text-gray-600 dark:text-gray-300 font-medium">
+                    {bioFeedback}
+                  </p>
+                )}
               </div>
             )}
 

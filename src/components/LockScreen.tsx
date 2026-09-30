@@ -3,7 +3,7 @@ import { Language } from '../types';
 import { 
   verifyPin, 
   isBiometricsSupported, 
-  isBiometricsEnabled, 
+  isBiometricsConfigured, 
   authenticateWithBiometrics, 
   setAppUnlocked,
   removePinLock
@@ -36,26 +36,29 @@ export const LockScreen: React.FC<LockScreenProps> = ({
   const [isVerifySuccess, setIsVerifySuccess] = useState(false);
 
   useEffect(() => {
-    // Check if device supports biometrics
+    // Check if device supports biometrics and has registered credentials
     isBiometricsSupported().then(supported => {
-      setHasBiometrics(supported && isBiometricsEnabled());
+      setHasBiometrics(supported && isBiometricsConfigured());
     });
   }, []);
 
-  // Try biometric unlock automatically on mount if enabled
+  // Try biometric unlock automatically on mount only if properly configured
   useEffect(() => {
     let mounted = true;
     const tryAutoBio = async () => {
-      if (isBiometricsEnabled()) {
-        const success = await authenticateWithBiometrics();
-        if (success && mounted) {
+      if (isBiometricsConfigured()) {
+        const res = await authenticateWithBiometrics();
+        if (res.success && mounted) {
           onUnlocked();
         }
       }
     };
-    tryAutoBio();
+    const timer = setTimeout(() => {
+      tryAutoBio();
+    }, 300);
     return () => {
       mounted = false;
+      clearTimeout(timer);
     };
   }, [onUnlocked]);
 
@@ -96,11 +99,25 @@ export const LockScreen: React.FC<LockScreenProps> = ({
   };
 
   const handleBiometricClick = async () => {
+    if (!isBiometricsConfigured()) {
+      setErrorMessage(
+        isBn 
+          ? 'ফিঙ্গারপ্রিন্ট এখনও সেটআপ হয়নি। ৪ ডিজিটের পিন দিয়ে আনলক করে সেটিং থেকে সেট করুন।' 
+          : 'Biometrics not configured. Enter PIN to unlock and set up in Settings.'
+      );
+      return;
+    }
     try {
       setIsAuthenticatingBio(true);
-      const success = await authenticateWithBiometrics();
-      if (success) {
+      const res = await authenticateWithBiometrics();
+      if (res.success) {
         onUnlocked();
+      } else if (res.error && res.error !== 'AbortError' && res.error !== 'NotAllowedError') {
+        setErrorMessage(
+          isBn
+            ? 'বায়োমেট্রিক মেলেনি! ৪ ডিজিটের পিন ব্যবহার করুন।'
+            : 'Biometric verification failed. Please enter PIN.'
+        );
       }
     } finally {
       setIsAuthenticatingBio(false);
