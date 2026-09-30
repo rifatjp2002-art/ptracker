@@ -1,0 +1,6 @@
+{
+  "name": "Period Tracker",
+  "description": "Bilingual (Bengali & English) Period Tracker web application with Firebase Google Auth, Firestore offline persistence, PWA service worker support, and smart AI cycle prediction.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

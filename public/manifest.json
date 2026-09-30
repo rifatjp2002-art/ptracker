@@ -1,0 +1,38 @@
+{
+  "id": "/",
+  "name": "Period Tracker - পিরিয়ড ট্র্যাকার",
+  "short_name": "PeriodTrack",
+  "description": "সহজ ও স্মার্ট পিরিয়ড ট্র্যাকার এবং সাইকেল প্রেডিকশন অ্যাপ",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FCE4EC",
+  "theme_color": "#E91E63",
+  "categories": ["health", "lifestyle", "medical"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

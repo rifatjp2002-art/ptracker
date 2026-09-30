@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4081" />
+      <stop offset="50%" stop-color="#E91E63" />
+      <stop offset="100%" stop-color="#C2185B" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#880E4F" flood-opacity="0.35" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Container -->
+  <rect width="512" height="512" rx="128" fill="url(#pinkGrad)" />
+  
+  <!-- Subtle circular floral / cycle pattern in background -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="8" stroke-dasharray="16 12" />
+  
+  <!-- Central Heart Shape with shadow -->
+  <g filter="url(#shadow)">
+    <path d="M256 390 C256 390 136 295 136 200 C136 145 178 108 230 108 C244 108 252 113 256 118 C260 113 268 108 282 108 C334 108 376 145 376 200 C376 295 256 390 256 390 Z" 
+          fill="#FFFFFF" />
+  </g>
+  
+  <!-- Small glowing droplet inside the heart to symbolize period/cycle care -->
+  <path d="M256 220 C256 220 236 250 236 268 C236 280 245 288 256 288 C267 288 276 280 276 268 C276 250 256 220 256 220 Z" 
+        fill="#E91E63" />
+</svg>
